@@ -1,15 +1,40 @@
 # Babai
 ## C++ Optimization Library (Version 0.1)
 The library has not released yet and is under development. contributions are welcomed.
+Babai is a C++ Optimization library based on Eigen and GSL.
 ## Features
 - Solving Unconstrained Optimization Problems
-- [to do] Solving Multi-Objective Optimization Problems
+- [to do] Multi-Objective Optimization Problems
 - [to do] Constrained Optimization Problems
-### Gradient free solvers
+- [to do] Stochastic Optimization Problems
+### Gradient-Free Solvers
 #### Adaptive Particle Swarm Optimization
 The APSO solver was implemented based on this paper:
 - Zhan, Z. H., Zhang, J., Li, Y., & Chung, H. S. H. (2009). Adaptive particle swarm optimization. IEEE Transactions on Systems, Man, and Cybernetics, Part B (Cybernetics), 39(6), 1362-1381.  
 Parameters Adaption and Elistic Learning are implemented.
+##### Example
+```cpp
+#include<iostream>
+#include "Babai/babai.hpp"
+int main(){
+  auto p = new babai::problem();
+  p->dimension(100)->lower_bound(-10.0)->upper_bound(10.0);
+  p->minimize([](auto v) { return v.squaredNorm(); });
+  // use Adaptive Particle Swarm optimizer
+  auto pso = new babai::PSO();
+  pso->npop(20)->problem(p);
+  // trace and control iterations
+  pso->iterate([](auto trace) {
+    // using the trace, you can access all parameters of the solver
+    std::cout << "step :" << trace->step() << "loss :" << trace->best()
+              << "objective evaluations :" << trace->nfe()
+    // continue until convergence
+    if (trace->best() < 0.01)
+      trace->stop();
+  });
+  return 0;
+}
+```
 ### Gradient-Based Solvers
 [to do]
 ## Tutorial

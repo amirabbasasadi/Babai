@@ -7,92 +7,83 @@
 #include <limits>
 
 namespace babai {
-  class PSO {
+class PSO {
 public:
+  // set optimization problem
   PSO *problem(problem *p) {
     _problem = p;
     return this;
   }
+  // solver's maximum iterations
   PSO *max_iter(unsigned n) {
     _max_iterations = n;
     return this;
   }
+  // number of particles
   PSO *npop(unsigned n) {
     _n_particles = n;
     return this;
   }
-  PSO* stop(){
+  // stop iterations
+  PSO *stop() {
     _force_stop = true;
     return this;
   }
-  PSO* iterate(std::function<void(PSO*)> trace){
+  // run iterations
+  PSO *iterate(std::function<void(PSO *)> trace) {
     _force_stop = false;
-    if(!_initialized){
+    if (!_initialized) {
       initialize();
       _initialized = true;
     }
-    while(!stop_iteration()){
+    while (!stop_iteration()) {
       _iterations++;
       trace(this);
       iter();
     }
     return this;
   }
+  // one step iteration
   PSO *iter() {
-      // particle swarm main loop
-      update_best_global_solution();
-      update_evolutionary_factor();
-      // adapt inertia weight
-      adapt_inertia_weight();
-      update_conv_state();
-      adapt_acceleration_coeffs();
-      // elistic learning
-      elistic_learning();
-      // update particles velocity
-      update_particles_velocity();
-      // update particles positions
-      update_particles_position();
-      _unchanged_iterations++;
+    // particle swarm main loop
+    update_best_global_solution();
+    update_evolutionary_factor();
+    // adapt inertia weight
+    adapt_inertia_weight();
+    update_conv_state();
+    adapt_acceleration_coeffs();
+    // elitist learning
+    elitist_learning();
+    // update particles velocity
+    update_particles_velocity();
+    // update particles positions
+    update_particles_position();
+    _unchanged_iterations++;
     return this;
   }
-  double best() const{
-    if(_problem->type() == MIN)
+  // get best known solution
+  double best() const {
+    if (_problem->type() == MIN)
       return _best_global_obj;
     return -_best_global_obj;
   }
-  unsigned step() const{
-    return _iterations;
-  }
-  unsigned nfe() const{
-    return _nfe;
-  }
-  unsigned npop() const{
-    return _n_particles;
-  }
-  double inertial_weight() const{
-    return _inertia_weight;
-  }
-  double social_influence() const{
-    return _social_influence;
-  }
-  double self_cognition() const{
-    return _self_cognition;
-  }
-  double evolutinary_factor() const{
-    return _evolutionary_factor;
-  }
-  double elistic_learning_rate() const{
-    return _elistic_learning_rate;
-  }
-  const Eigen::RowVectorXd& best_position() const{
+  unsigned step() const { return _iterations; }
+  unsigned nfe() const { return _nfe; }
+  unsigned npop() const { return _n_particles; }
+  double inertial_weight() const { return _inertia_weight; }
+  double social_influence() const { return _social_influence; }
+  double self_cognition() const { return _self_cognition; }
+  double evolutinary_factor() const { return _evolutionary_factor; }
+  double elitist_learning_rate() const { return _elitist_learning_rate; }
+  const Eigen::RowVectorXd &best_position() const {
     return _best_global_position;
   }
-  const Eigen::MatrixXd& particles() const{
-    return _position;
+  const Eigen::MatrixXd &particles() const { return _position; }
+  const Eigen::MatrixXd &best_local_positions() const {
+    return _best_particle_position;
   }
-  const Eigen::MatrixXd& velocity() const{
-    return _velocity;
-  }
+  const Eigen::MatrixXd &velocity() const { return _velocity; }
+
 protected:
   bool _force_stop;
   bool _initialized;
@@ -118,25 +109,21 @@ protected:
   double _inertia_weight;
   double _self_cognition;
   double _social_influence;
-  double _elistic_learning_rate;
+  double _elitist_learning_rate;
   long double _evolutionary_factor;
   enum convergence_state { S1, S2, S3, S4 };
   convergence_state _conv_state;
   std::function<long double(vecr)> _obj;
-  bool stop_iteration(){
-    if(_force_stop)
+  bool stop_iteration() {
+    if (_force_stop)
       return true;
     return false;
   }
-  void generate_objective(){
-    if(_problem->type() == MIN){
-      _obj = [this](vecr v){
-        return this->_problem->obj(v);
-      };
-    }else{
-      _obj = [this](vecr v){
-        return -(this->_problem->obj(v));
-      };
+  void generate_objective() {
+    if (_problem->type() == MIN) {
+      _obj = [this](vecr v) { return this->_problem->obj(v); };
+    } else {
+      _obj = [this](vecr v) { return -(this->_problem->obj(v)); };
     }
   }
   void initialize() {
@@ -177,7 +164,7 @@ protected:
         _velocity(i, j) = gsl_ran_flat(Random::generator(), -velocity_bound[j],
                                        velocity_bound[j]);
   }
-  long double objective(const Eigen::RowVectorXd& p){
+  long double objective(const Eigen::RowVectorXd &p) {
     _nfe++;
     return _obj(p);
   }
@@ -185,9 +172,10 @@ protected:
     _inertia_weight = 0.9;
     _self_cognition = 1;
     _social_influence = 1;
-    _elistic_learning_rate = 1;
+    _elitist_learning_rate = 1;
   }
-  void update_best_found_position(long double obj, const Eigen::RowVectorXd& p){
+  void update_best_found_position(long double obj,
+                                  const Eigen::RowVectorXd &p) {
     _best_global_obj = obj;
     _best_global_position = p;
     _unchanged_iterations = 0;
@@ -241,21 +229,24 @@ protected:
     long double delta_slight, delta;
     delta = gsl_ran_flat(Random::generator(), 0.05, 0.1);
     delta_slight = gsl_ran_flat(Random::generator(), 0.05, 0.5);
-    if (_conv_state == S1) {
+    // Perform Strategy based on the convergence state
+    switch (_conv_state) {
+    case S1:
       _self_cognition += delta;
       _social_influence -= delta;
-    }
-    if (_conv_state == S2) {
+      break;
+    case S2:
       _social_influence -= delta_slight;
       _self_cognition += delta_slight;
-    }
-    if (_conv_state == S3) {
+      break;
+    case S3:
       _social_influence += delta_slight;
       _self_cognition += delta_slight;
-    }
-    if (_conv_state == S4) {
+      break;
+    case S4:
       _self_cognition -= delta;
       _social_influence += delta;
+      break;
     }
     // acceleration coeffs bound
     long double temp_sum = _self_cognition + _social_influence;
@@ -268,8 +259,8 @@ protected:
       _self_cognition = 4.0 * (_self_cognition / temp_sum);
     }
   }
-  // perform elistic learning in convergence state
-  void elistic_learning() {
+  // perform elitist learning in convergence state
+  void elitist_learning() {
     // only run during convergence
     if (_conv_state == S3) {
       for (unsigned i = 0; i < _unchanged_iterations + 1; i++) {
@@ -280,7 +271,7 @@ protected:
 
         // change the dimension
         double delta =
-            gsl_ran_gaussian(Random::generator(), _elistic_learning_rate);
+            gsl_ran_gaussian(Random::generator(), _elitist_learning_rate);
         temp_particle(random_dim) += (_problem->get_upper_bound()(random_dim) -
                                       _problem->get_lower_bound()(random_dim)) *
                                      delta;

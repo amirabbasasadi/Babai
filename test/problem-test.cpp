@@ -28,9 +28,8 @@ TEST_CASE("Creating Optimizatin Problem", "[problem]") {
   // trace and control iterations
   pso->iterate([](auto trace) {
     // using the trace, you can access all parameters of the solver
-    std::cout << "step :" << trace->step() << "loss :" << trace->best()
-              << "objective evaluations :" << trace->nfe()
-              << "best solution :" << trace->best_position() << std::endl;
+    std::cout << "step :" << trace->step() << " | loss :" << trace->best()
+              << std::endl;
     // continue until convergence
     if (trace->best() < 0.01)
       trace->stop();

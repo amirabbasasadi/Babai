@@ -29,6 +29,7 @@ public:
     _force_stop = true;
     return this;
   }
+
   // run iterations
   PSO *iterate(std::function<void(PSO *)> trace) {
     _force_stop = false;
@@ -69,6 +70,7 @@ public:
   }
   unsigned step() const { return _iterations; }
   unsigned nfe() const { return _nfe; }
+  unsigned dim() const {return _problem->get_dimension();}
   unsigned npop() const { return _n_particles; }
   double inertial_weight() const { return _inertia_weight; }
   double social_influence() const { return _social_influence; }
@@ -81,6 +83,9 @@ public:
   const Eigen::MatrixXd &particles() const { return _position; }
   const Eigen::MatrixXd &best_local_positions() const {
     return _best_particle_position;
+  }
+  const Eigen::VectorXd &best_local() const {
+    return _best_particle_obj;
   }
   const Eigen::MatrixXd &velocity() const { return _velocity; }
 

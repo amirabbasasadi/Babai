@@ -1,7 +1,7 @@
 # Babai
 The library has not been released yet and is under development. contributions are welcomed.
 ## C++ Optimization Library (Version 0.1)
-Babai is a C++ Optimization library based on Eigen and GSL.
+Babai(means sheep) is a C++ Optimization library based on Eigen and GSL.
 ## Features
 - Solving Unconstrained Optimization Problems
 - [to do] Multi-Objective Optimization Problems
